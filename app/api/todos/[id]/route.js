@@ -1,7 +1,7 @@
 import pool from '../../../../lib/db';
 
 export async function DELETE(request, { params }) {
-    const { id } = (await params).id;
+    const { id } = (await params);
     await pool.query('DELETE FROM todos WHERE id = $1', [id]);
     return Response.json({ success: true });
 }
