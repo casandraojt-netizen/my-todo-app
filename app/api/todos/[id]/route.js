@@ -1,13 +1,13 @@
 import pool from '../../../../lib/db';
 
 export async function DELETE(request, { params }) {
-    const { id } = params;
+    const { id } = (await params).id;
     await pool.query('DELETE FROM todos WHERE id = $1', [id]);
     return Response.json({ success: true });
 }
 
 export async function PUT(request, { params }) {
-    const { id } = params;
+    const { id } = await params;
     const { done } = await request.json();
 
     let sql;
