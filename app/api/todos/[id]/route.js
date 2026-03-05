@@ -9,7 +9,14 @@ export async function DELETE(request, { params }) {
 export async function PUT(request, { params }) {
     const { id } = params;
     const { done } = await request.json();
-    const sql = 'UPDATE todos SET done = $1, completed_at = CASE WHEN $1 = true THEN NOW() ELSE NULL END WHERE id = $2 RETURNING *'; 
-    const result = await pool.query(sql, [done, id]);
-    return Response.json(result.rows[0])
+
+    let sql;
+    if (done) {
+        sql = 'UPDATE todos SET done = true, completed_at = NOW() WHERE id = $1 RETURNING *';
+    } else {
+        sql = 'UPDATE todos SET done = false, completed_at = NULL WHERE id = $1 RETURNING *';
+    }
+
+    const result = await pool.query(sql, [id]);
+    return Response.json(result.rows[0]);
 }
