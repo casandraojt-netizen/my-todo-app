@@ -1,14 +1,17 @@
-let todos = [
-    { id: 1, text: 'Learn Next.js', done: false },
-];
+import pool from '../../../lib/db';
 
 export async function GET() {
-    return Response.json(todos);
+    const result = await pool.query(
+        'SELECT * FROM todos ORDER BY created_at DESC'
+    );
+    return Response.json(result.rows);
 }
 
 export async function POST(request) {
-    const body = await request.json();
-    const todo = { id: Date.now(), ...body };
-    todos.push(todo);
-    return Response.json(todo, { status: 201 });
+    const { text } = await request.json();
+    const result = await pool.query(
+        'INSERT INTO todos (text) VALUES ($1) RETURNING *',
+        [text] 
+    );
+    return Response.json(result.rows[0], { status: 201 });
 }
