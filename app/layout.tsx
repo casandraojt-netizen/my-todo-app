@@ -27,6 +27,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <nav style={{ padding: '16px 40px', borderBottom: '1px solid #e5e7eb' }}>
+          <a href="/" style={{ marginRight: 24 }}>Todos</a>
+          <a href="/stats">Stats</a>
+        </nav>
         {children}
       </body>
     </html>
