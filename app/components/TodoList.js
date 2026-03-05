@@ -25,7 +25,18 @@ export default function TodoList() {
         setInput('');
     }
 
-    function toggleTodo(id) {
+    async function deleteTodo(id) {
+        await fetch(`/api/todos/${id}`, { method: 'DELETE' });
+        setTodos(todos.filter(t => t.id !== id));
+    }
+
+    async function toggleTodo(id) {
+        const todo = todos.find(t => t.id === id);
+        await fetch(`/api/todos/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ done: !todo.done }),
+        });
         setTodos(todos.map(t =>
             t.id === id ? { ...t, done: !t.done } : t
         ));
@@ -36,6 +47,10 @@ export default function TodoList() {
             <div>
                 <input value={input} onChange={e => setInput(e.target.value)} placeholder="Add a task..." style={{ marginRight: 8, padding: 8 }} />
                 <button onClick={addTodo} style={{ padding: '8px 16px' }}>Add</button>
+                <button onClick={() => deleteTodo(todo.id)}
+                    style={{ marginLeft: 12, color: 'red', cursor: 'pointer', background: 'None', border: 'none', fontSize: 16 }}>
+                    x
+                </button>
             </div>
             <ul style={{marginTop: 24 }}>
                 {todos.map(todo => (

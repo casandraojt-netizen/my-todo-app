@@ -1,0 +1,16 @@
+import pool from '../../../../lib/db';
+
+export async function DELETE(request, { params }) {
+    const { id } = params;
+    await pool.query('DELETE FROM todos WHERE id = $1', [id]);
+    return Response.json({ success: true });
+}
+
+export async function PUT(request, { params }) {
+    const { id } = params;
+    const { done } = await request.json();
+    const result = await pool.query(
+        'UPDATE todos SET done = $1 WHERE id = $2 RETURNING *', [done, id]
+    );
+    return Response.json(result.rows[0]);
+}
