@@ -13,9 +13,15 @@ export default function TodoList() {
 
     const [input, setInput] = useState('');
 
-    function addTodo() {
+    async function addTodo() {
         if (!input.trim()) return;
-        setTodos([...todos, { id: Date.now(), text: input, done: false }]);
+        const res = await fetch('/api/todos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: input, done: false }),
+        });
+        const newTodo = await res.json();
+        setTodos([newTodo, ...todos]);
         setInput('');
     }
 
