@@ -7,10 +7,10 @@ export async function GET() {
 }
 
 export async function POST(request) {
-    const { text } = await request.json();
+    const { text, priority } = await request.json();
     const result = await pool.query(
-        'INSERT INTO todos (text) VALUES ($1) RETURNING *',
-        [text] 
+        'INSERT INTO todos (text, priority) VALUES ($1, $2) RETURNING *',
+        [text, priority] 
     );
     return Response.json(result.rows[0], { status: 201 });
 }

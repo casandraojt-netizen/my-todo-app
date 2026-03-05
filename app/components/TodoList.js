@@ -11,6 +11,8 @@ export default function TodoList() {
             .then(data => setTodos(data));
     }, []);
 
+    const colors = { high: '#FEE2E2', medium: '#FEF9C3', low: '#DCFCE7' };
+
     async function addTodo() {
         if (!input.trim()) return;
         const res = await fetch('/api/todos', {
@@ -55,6 +57,13 @@ export default function TodoList() {
                             display: 'flex', alignItems: 'center' }}>
                         <span onClick={() => toggleTodo(todo.id)}>
                             {todo.done ? '✅' : '◻'} {todo.text}
+                        </span>
+                        <span style={{
+                            background: colors[todo.priority] || colors.medium,
+                            borderRadius: 4, padding: '2px 8px',
+                            fontSize: 12, marginLeft: 8
+                        }}>
+                            {todo.priority}
                         </span>
                         <button onClick={() => deleteTodo(todo.id)}
                             style={{ marginLeft: 12, color: 'red', cursor: 'pointer',
