@@ -3,15 +3,13 @@ import { useState, useEffect } from 'react';
 
 export default function TodoList() {
     const [todos, setTodos] = useState([]);
+    const [input, setInput] = useState('');
 
     useEffect(() => {
-        fetch('api/todos')
+        fetch('/api/todos')
             .then(res => res.json())
             .then(data => setTodos(data));
     }, []);
-
-
-    const [input, setInput] = useState('');
 
     async function addTodo() {
         if (!input.trim()) return;
@@ -45,19 +43,24 @@ export default function TodoList() {
     return (
         <div>
             <div>
-                <input value={input} onChange={e => setInput(e.target.value)} placeholder="Add a task..." style={{ marginRight: 8, padding: 8 }} />
+                <input value={input} onChange={e => setInput(e.target.value)}
+                    placeholder="Add a task..." style={{ marginRight: 8, padding: 8 }} />
                 <button onClick={addTodo} style={{ padding: '8px 16px' }}>Add</button>
-                <button onClick={() => deleteTodo(todo.id)}
-                    style={{ marginLeft: 12, color: 'red', cursor: 'pointer', background: 'None', border: 'none', fontSize: 16 }}>
-                    x
-                </button>
             </div>
-            <ul style={{marginTop: 24 }}>
+            <ul style={{ marginTop: 24 }}>
                 {todos.map(todo => (
-                    <li key={todo.id} onClick={() => toggleTodo(todo.id)}
+                    <li key={todo.id}
                         style={{ cursor: 'pointer', listStyle: 'none', padding: 8,
-                            textDecoration: todo.done ? 'line-through' : 'none' }}>
-                        {todo.done ? '□' : '◻'} {todo.text}
+                            textDecoration: todo.done ? 'line-through' : 'none',
+                            display: 'flex', alignItems: 'center' }}>
+                        <span onClick={() => toggleTodo(todo.id)}>
+                            {todo.done ? '✅' : '◻'} {todo.text}
+                        </span>
+                        <button onClick={() => deleteTodo(todo.id)}
+                            style={{ marginLeft: 12, color: 'red', cursor: 'pointer',
+                                background: 'none', border: 'none', fontSize: 16 }}>
+                            ✕
+                        </button>
                     </li>
                 ))}
             </ul>
