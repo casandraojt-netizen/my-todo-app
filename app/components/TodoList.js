@@ -9,6 +9,8 @@ export default function TodoList() {
     const [error, setError] = useState(null);
     const [search, setSearch] = useState(''); 
     const [selectedPriority, setSelectedPriority] = useState(null);
+    const [editingId, setEditingId] = useState(null);
+    const [editText, setEditText] = useState(''); 
 
     useEffect(() => {
         setIsLoading(true);
@@ -60,6 +62,18 @@ export default function TodoList() {
         ));
     }
 
+    async function saveEdit(id) {
+        const res = await fetch(`/api/todos/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: editText }),
+        });
+        const updated = await res.json();
+        setTodos(todos.map(t => t.id === id ? updated : t));
+        setEditingId(null);
+        setEditText('');
+    }
+
     const filteredTodos = todos
     .filter(t => selectedPriority === null || t.priority === selectedPriority)
     .filter(t => t.text.toLowerCase().includes(search.toLowerCase())
@@ -107,12 +121,29 @@ export default function TodoList() {
             <ul style={{ marginTop: 24 }}>
                 {filteredTodos.map(todo => (
                     <li key={todo.id}
-                        style={{ cursor: 'pointer', listStyle: 'none', padding: 8,
-                            textDecoration: todo.done ? 'line-through' : 'none',
-                            display: 'flex', alignItems: 'center' }}>
-                        <span onClick={() => toggleTodo(todo.id)}>
-                            {todo.done ? '✅' : '◻'} {todo.text}
-                        </span>
+                        style={{ listStyle: 'none', padding: 8, display: 'flex', alignItems: 'center' }}>
+                        {editingId === todo.id ? (
+                            <>
+                                <input
+                                    value={editText}
+                                    onChange={e => setEditText(e.target.value)}
+                                    style={{ padding: 4, marginRight: 8 }}
+                                />
+                                <button onClick={() => saveEdit(todo.id)} style={{ marginRight: 4 }}>Save</button>
+                                <button onClick={() => setEditingId(null)}>Cancel</button>
+                            </>
+                        ) : (
+                            <>
+                                <span onClick={() => toggleTodo(todo.id)}
+                                    style={{ textDecoration: todo.done ? 'line-through' : 'none' }}>
+                                    {todo.done ? '✅' : '◻'} {todo.text}
+                                </span>
+                                <button onClick={() => { setEditingId(todo.id); setEditText(todo.text); }}
+                                    style={{ marginLeft: 8, background: 'none', border: 'none', cursor: 'pointer' }}>
+                                    ✏️
+                                </button>
+                            </>
+                        )}
                         <span style={{
                             background: colors[todo.priority] || colors.medium,
                             borderRadius: 4, padding: '2px 8px',

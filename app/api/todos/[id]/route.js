@@ -20,3 +20,13 @@ export async function PUT(request, { params }) {
     const result = await pool.query(sql, [id]);
     return Response.json(result.rows[0]);
 }
+
+export async function PATCH(request, { params }) {
+    const { id } = await params;
+    const { text } = await request.json();
+    const result = await pool.query(
+        'UPDATE todos SET text = $1 WHERE id = $2 RETURNING *',
+        [text, id]
+    );
+    return Response.json(result.rows[0]);
+}
