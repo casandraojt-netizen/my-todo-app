@@ -5,25 +5,40 @@ export default function TodoList() {
     const [todos, setTodos] = useState([]);
     const [input, setInput] = useState('');
     const [priority, setPriority] = useState('medium');  // ← all useState together up here
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
+        setIsLoading(true);
+        setError(null);
         fetch('/api/todos')
-            .then(res => res.json())
-            .then(data => setTodos(data));
+            .then(res => {
+                if (!res.ok) throw new Error('Failed to load todos');
+                return res.json();
+            })
+            .then(data => {
+                setTodos(data);
+                setIsLoading(false);
+            });
     }, []);
 
-    const colors = { high: '#FEE2E2', medium: '#FEF9C3', low: '#DCFCE7' };  // ← moved down here
+    const colors = { high: '#FEE2E2', medium: '#FEF9C3', low: '#DCFCE7' };
 
     async function addTodo() {
         if (!input.trim()) return;
-        const res = await fetch('/api/todos', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: input, done: false, priority }),
-        });
-        const newTodo = await res.json();
-        setTodos([newTodo, ...todos]);
-        setInput('');
+        try {
+            const res = await fetch('/api/todos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: input, done: false, priority }),
+            });
+            if (!res.ok) throw new Error('Failed to add todo');
+            const newTodo = await res.json();
+            setTodos([newTodo, ...todos]);
+            setInput('');
+        }   catch (err) {
+            setError(err.message);
+        }
     }
 
     async function deleteTodo(id) {
@@ -45,6 +60,8 @@ export default function TodoList() {
 
     return (
         <div>
+            {isLoading && <p style={{ color: '#6B7280' }}>Loading...</p>}
+            {error && <p style={{ color: 'red' }}>Error: {error}</p>}
             <div>
                 <input value={input} onChange={e => setInput(e.target.value)}
                     placeholder="Add a task..." style={{ marginRight: 8, padding: 8 }} />
