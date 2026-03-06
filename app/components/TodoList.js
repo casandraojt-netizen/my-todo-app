@@ -7,6 +7,8 @@ export default function TodoList() {
     const [priority, setPriority] = useState('medium');  // ← all useState together up here
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [search, setSearch] = useState(''); 
+    const [selectedPriority, setSelectedPriority] = useState(null);
 
     useEffect(() => {
         setIsLoading(true);
@@ -58,10 +60,39 @@ export default function TodoList() {
         ));
     }
 
+    const filteredTodos = todos
+    .filter(t => selectedPriority === null || t.priority === selectedPriority)
+    .filter(t => t.text.toLowerCase().includes(search.toLowerCase())
+    );
+
     return (
         <div>
             {isLoading && <p style={{ color: '#6B7280' }}>Loading...</p>}
             {error && <p style={{ color: 'red' }}>Error: {error}</p>}
+            <div style={{ marginBottom: 12 }}>
+                <button onClick={() => setSelectedPriority(null)}
+                    style={{ marginRight: 8, fontWeight: selectedPriority === null ? 'bold' : 'normal' }}>
+                    All
+                </button>
+                <button onClick={() => setSelectedPriority('high')}
+                    style={{ marginRight: 8, fontWeight: selectedPriority === 'high' ? 'bold' : 'normal' }}>
+                    High
+                </button>
+                <button onClick={() => setSelectedPriority('medium')}
+                    style={{ marginRight: 8, fontWeight: selectedPriority === 'medium' ? 'bold' : 'normal' }}>
+                    Medium
+                </button>
+                <button onClick={() => setSelectedPriority('low')}
+                    style={{ marginRight: 8, fontWeight: selectedPriority === 'low' ? 'bold' : 'normal' }}>
+                    Low
+                </button>
+            </div>
+            <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search tasks..."
+                style={{ marginBottom: 12, padding: 8, width: '100%', boxSizing: 'border-box' }}
+            />
             <div>
                 <input value={input} onChange={e => setInput(e.target.value)}
                     placeholder="Add a task..." style={{ marginRight: 8, padding: 8 }} />
@@ -74,7 +105,7 @@ export default function TodoList() {
                 <button onClick={addTodo} style={{ padding: '8px 16px' }}>Add</button>
             </div>
             <ul style={{ marginTop: 24 }}>
-                {todos.map(todo => (
+                {filteredTodos.map(todo => (
                     <li key={todo.id}
                         style={{ cursor: 'pointer', listStyle: 'none', padding: 8,
                             textDecoration: todo.done ? 'line-through' : 'none',
@@ -96,6 +127,11 @@ export default function TodoList() {
                         </button>
                     </li>
                 ))}
+                {search && filteredTodos.length === 0 && (
+                    <li style={{ listStyle: 'none', padding: 8, color: '#9CA3AF' }}>
+                        No tasks match "{search}"
+                    </li>
+                )}
             </ul>
         </div>
     );
