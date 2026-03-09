@@ -1,6 +1,64 @@
 'use client';
 import { useState, useEffect } from 'react';
 
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove, } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+function SortableTodo({ todo, toggleTodo, deleteTodo, editingId, setEditingId, editText, saveEdit, colors }) {
+    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: todo.id});
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        listStyle: 'none',
+        padding: 8,
+        display: 'flex',
+        alignItems: 'center',
+    };
+
+    return (
+        <li ref={setNodeRef} style={style}>
+            <span {...attributes} {...listeners}
+                style={{ marginRight: 8, cursor: 'grab', color: '#9CA3AF' }}>
+                ⠿
+            </span>
+            {editingId === todo.id ? (
+                <>
+                    <input value={editText} onChange={e => setEditText(e. target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') saveEdit(todo.id); }}
+                        style={{ padding: 4, marginRight: 8 }}/>
+                    <button onClick={() => saveEdit(todo.id)} style={{ marginRight: 4 }}>Save</button>
+                    <button onClick={() => setEditingId(null)}>Cancel</button>
+                </>
+            ) : (
+                <>
+                    <span onClick={() => toggleTodo(todo.id)}
+                        style={{ textDecoration: todo.done ? 'line-through' : 'none', cursor: 'pointer' }}>
+                        {todo.done ? '✅' : '◻'} {todo.text}
+                    </span>
+                    <button onClick={() => { setEditingId(todo.id); setEditText(todo.text); }}
+                        style={{ marginLeft: 8, background: 'none', border: 'none', cursor: 'pointer' }}>
+                        ✏️
+                    </button>
+                </>
+            )}
+            <span style={{
+                background: colors[todo.priority] || colors.medium,
+                borderRadius: 4, padding: '2px 8 px',
+                fontSize: 12, marginLeft: 8
+            }}>
+                {todo.priority}
+            </span>
+            <button onClick={() => deleteTodo(todo.id)}
+                style={{ marginLeft: 12, color: 'red', cursor: 'pointer',
+                    background: 'none', border: 'none', fontSize: 16 }}>
+                ✕
+            </button>
+        </li>
+    );
+}
+
 export default function TodoList() {
     const [todos, setTodos] = useState([]);
     const [input, setInput] = useState('');
@@ -74,6 +132,25 @@ export default function TodoList() {
         setEditText('');
     }
 
+    const sensors = useSensors(useSensor(PointerSensor));
+
+    async function handleDragEnd(event) {
+        const { active, over } = event;
+        if (!over || active.id === over.id) return;
+
+        const oldIndex = todos.findIndex(t => t.id === active.id);
+        const newIndex = todos.findIndex(t => t.id === over.id);
+        const newTodos = arrayMove(todos, oldIndex, newIndex);
+
+        setTodos(newTodos);
+
+        await fetch('/api/todos', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderedIds: newTodos.map(t => t.id) }),
+        });
+    }
+
     const filteredTodos = todos
     .filter(t => selectedPriority === null || t.priority === selectedPriority)
     .filter(t => t.text.toLowerCase().includes(search.toLowerCase())
@@ -109,6 +186,7 @@ export default function TodoList() {
             />
             <div>
                 <input value={input} onChange={e => setInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') addTodo(); }}
                     placeholder="Add a task..." style={{ marginRight: 8, padding: 8 }} />
                 <select value={priority} onChange={e => setPriority(e.target.value)}
                     style={{ marginRight: 8, padding: 8 }}>
@@ -118,52 +196,31 @@ export default function TodoList() {
                 </select>
                 <button onClick={addTodo} style={{ padding: '8px 16px' }}>Add</button>
             </div>
-            <ul style={{ marginTop: 24 }}>
-                {filteredTodos.map(todo => (
-                    <li key={todo.id}
-                        style={{ listStyle: 'none', padding: 8, display: 'flex', alignItems: 'center' }}>
-                        {editingId === todo.id ? (
-                            <>
-                                <input
-                                    value={editText}
-                                    onChange={e => setEditText(e.target.value)}
-                                    style={{ padding: 4, marginRight: 8 }}
-                                />
-                                <button onClick={() => saveEdit(todo.id)} style={{ marginRight: 4 }}>Save</button>
-                                <button onClick={() => setEditingId(null)}>Cancel</button>
-                            </>
-                        ) : (
-                            <>
-                                <span onClick={() => toggleTodo(todo.id)}
-                                    style={{ textDecoration: todo.done ? 'line-through' : 'none' }}>
-                                    {todo.done ? '✅' : '◻'} {todo.text}
-                                </span>
-                                <button onClick={() => { setEditingId(todo.id); setEditText(todo.text); }}
-                                    style={{ marginLeft: 8, background: 'none', border: 'none', cursor: 'pointer' }}>
-                                    ✏️
-                                </button>
-                            </>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={filteredTodos.map(t => t.id)} strategy={verticalListSortingStrategy}>
+                    <ul style={{ marginTop: 24, paddingLeft: 0 }}>
+                        {filteredTodos.map(todo => (
+                            <SortableTodo
+                                key={todo.id}
+                                todo={todo}
+                                toggleTodo={toggleTodo}
+                                deleteTodo={deleteTodo}
+                                editingId={editingId}
+                                setEditingId={setEditingId}
+                                editText={editText}
+                                setEditText={setEditText}
+                                saveEdit={saveEdit}
+                                colors={colors}
+                            />
+                        ))}
+                        {search && filteredTodos.length === 0 && (
+                            <li style={{ listStyle: 'none', padding: 8, color: '#9CA3AF' }}>
+                                No tasks match "{search}"
+                            </li>
                         )}
-                        <span style={{
-                            background: colors[todo.priority] || colors.medium,
-                            borderRadius: 4, padding: '2px 8px',
-                            fontSize: 12, marginLeft: 8
-                        }}>
-                            {todo.priority}
-                        </span>
-                        <button onClick={() => deleteTodo(todo.id)}
-                            style={{ marginLeft: 12, color: 'red', cursor: 'pointer',
-                                background: 'none', border: 'none', fontSize: 16 }}>
-                            ✕
-                        </button>
-                    </li>
-                ))}
-                {search && filteredTodos.length === 0 && (
-                    <li style={{ listStyle: 'none', padding: 8, color: '#9CA3AF' }}>
-                        No tasks match "{search}"
-                    </li>
-                )}
-            </ul>
+                    </ul>
+                </SortableContext>
+            </DndContext>
         </div>
     );
 }
