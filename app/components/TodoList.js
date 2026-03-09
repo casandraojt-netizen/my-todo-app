@@ -55,6 +55,9 @@ function SortableTodo({ todo, toggleTodo, deleteTodo, editingId, setEditingId, e
                     background: 'none', border: 'none', fontSize: 16 }}>
                 ✕
             </button>
+            <span style={{ fontSize: 11, color: '#9CA3AF', marginLeft: 8 }}>
+                {new Date(todo.created_at).toLocaleDateString()}
+            </span>
         </li>
     );
 }
