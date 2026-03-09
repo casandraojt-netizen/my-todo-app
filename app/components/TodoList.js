@@ -45,7 +45,7 @@ function SortableTodo({ todo, toggleTodo, deleteTodo, editingId, setEditingId, e
             )}
             <span style={{
                 background: colors[todo.priority] || colors.medium,
-                borderRadius: 4, padding: '2px 8 px',
+                borderRadius: 4, padding: '2px 8px',
                 fontSize: 12, marginLeft: 8
             }}>
                 {todo.priority}
